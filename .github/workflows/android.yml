@@ -1,0 +1,46 @@
+
+name: Build Refrigeracion Pro APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extraer proyecto
+        run: |
+          mkdir -p proyecto
+          unzip -o RefrigeracionPro-Android-para-compilar-en-celular.zip -d proyecto
+          find proyecto -name settings.gradle -print
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Compilar APK
+        run: |
+          DIR="$(dirname "$(find proyecto -name settings.gradle -print -quit)")"
+          test -n "$DIR"
+          cd "$DIR"
+          gradle assembleDebug
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RefrigeracionPro-debug-apk
+          path: proyecto/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          
